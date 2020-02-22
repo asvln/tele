@@ -10,59 +10,71 @@ macro_rules! row {
     }
 }
 
-pub fn print(list: List, group: Option<&str>) {
-    match group {
-        // print_group
-        Some(g) => {
-            let mut rows = vec![
-                row!{
-                    "name", head_format();
-                    &g, head_format();
-                }
-            ];
-            for w in &list.0 {
-                let mut r = vec![
-                    row!{
-                        &w.name, Default::default();
-                        &w.path, Default::default();
-                    }
-                ];
-                rows.append(&mut r)
-            }
-            Table::new(rows, table_format())
-                .print_stdout()
-                .expect("error printing table")
+pub fn print_all(list: List) {
+    let mut rows = vec![
+        row! {
+            "name", head_format();
+            "group", head_format();
+            "path", head_format();
         }
-        // print_base
-        None => {
-            let mut rows = vec![
-                row!{
-                    "name", head_format();
-                    "path", head_format();
-                    "group", head_format();
-                }
-            ];
-            for w in &list.0 {
-                let g = match &w.group {
-                    Some(g) => g,
-                    None => ""
-                };
-                let mut r = vec![
-                    row!{
-                        &w.name, Default::default();
-                        &w.path, Default::default();
-                        &g, Default::default();
-                    }
-                ];
-                rows.append(&mut r)
+    ];
+    for w in &list.0 {
+        let g = match &w.group {
+            Some(g) => g,
+            None => ""
+        };
+        rows.push(
+            row! {
+                &w.name, Default::default();
+                &g, Default::default();
+                &w.path, Default::default();
             }
-            Table::new(rows, table_format())
-                .print_stdout()
-                .expect("error printing table")
-        }
+        )
     }
-    // build rows
+    Table::new(rows, table_format())
+        .print_stdout()
+        .expect("error printing table")
+}
 
+pub fn print_group(list: List, group: &str) {
+    let mut rows = vec![
+        row! {
+            "name", head_format();
+            group, head_format();
+        }
+    ];
+    for w in &list.0 {
+        rows.push(
+            row! {
+                &w.name, Default::default();
+                &w.path, Default::default();
+            }
+        )
+    }
+    Table::new(rows, table_format())
+        .print_stdout()
+        .expect("error printing table")
+}
+
+pub fn print_groupless(list: List) {
+    let mut rows = vec![
+        row! {
+            "name", head_format();
+            "path", head_format();
+        }
+    ];
+    for w in &list.0 {
+        let mut r = vec![
+            row! {
+                &w.name, Default::default();
+                &w.path, Default::default();
+            }
+        ];
+        rows.append(&mut r)
+    }
+    Table::new(rows, table_format())
+        .print_stdout()
+        .expect("error printing table")
 }
 
 fn head_format() -> CellFormat {

@@ -60,15 +60,11 @@ impl List {
     }
 
     pub fn filter_group(&self, group: Option<&str>) -> Option<Self> {
-        let mut filtered_wps: Vec<Waypoint> = Vec::new();
-        let g: Option<String> = group.map(str::to_string);
-        // build group list
-        let wps = self.0.to_owned();
-        for w in wps {
-            if w.group == g {
-                filtered_wps.push(w)
-            }
-        }
+        let g = group.map(str::to_string);
+        let filtered_wps: Vec<Waypoint> = self.0.iter()
+            .filter(|w| w.group == g)
+            .cloned()
+            .collect();
         if !filtered_wps.is_empty() {
             Some(Self(filtered_wps))
         } else {
@@ -93,7 +89,6 @@ impl List {
         }
     }
 
-
     pub fn remove_group(mut self, name: &str) -> Result<Self, &str> {
         match self.get_index(name) {
             Some(i) => {
@@ -101,7 +96,7 @@ impl List {
                 println!("'{}' removed from waypoints", name);
                 Ok(self)
             }
-            None => Err("waypoint was not found")
+            None => Err("no group entries found")
         }
     }
 
@@ -111,7 +106,7 @@ impl List {
     pub fn load() -> List {
         // create file if it does not exist
         if fs::metadata(Self::path()).is_err() {
-            fs::write(Self::path(), b"# tele waypoints")
+            fs::write(Self::path(), b"[]")
                 .expect("could not create '~/.config/tele/waypoints.json'")
         }
         // read file
@@ -123,6 +118,17 @@ impl List {
         // deserialize
         serde_json::from_str(&file_string)
             .expect("error deserializing list")
+    }
+
+    pub fn load_group(group: &str) -> List {
+        let list = Self::load();
+        list.filter_group(Some(group))
+            .expect("group has no entries")
+    }
+
+    pub fn load_groupless() -> Option<List> {
+        let list = Self::load();
+        list.filter_group(None)
     }
 
     /// Writes `waypoints.json`

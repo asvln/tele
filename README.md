@@ -33,8 +33,8 @@ t add -n NAME  # define a custom name (default name is current directory)
 t add -g GROUP # add to group
 
 # remove waypoint
-t rm -n NAME
-t rm -g GROUP  # remove all group entries
+t rm NAME
+t rm -g GROUP  # remove all entries in group
 
 # prints waypoints
 t list          # prints ungrouped entries

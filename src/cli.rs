@@ -52,14 +52,16 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                     Arg::with_name("name")
                     .help("Waypoint name to be removed")
                     .index(1)
-                    .required(true),
+                    .required_unless("group")
+                    .conflicts_with("group"),
                 )
                 .arg(
                     Arg::with_name("group")
                         .help("Remove all specified group entries")
                         .short("g")
                         .long("group")
-                        .takes_value(true),
+                        .takes_value(true)
+                        .empty_values(false),
                         // .multiple(true),
                 )
         )
@@ -72,7 +74,8 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                     .help("List only specified group")
                     .short("g")
                     .long("group")
-                    .takes_value(true),
+                    .takes_value(true)
+                    .empty_values(false),
                 )
                 .arg(
                     Arg::with_name("all")
@@ -84,24 +87,32 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
         .get_matches()
 }
 
+pub enum ListMatches {
+    Groupless,
+    All,
+    Group(String),
+}
+
 pub fn parse_matches(matches: clap::ArgMatches<'static>) {
     match matches.subcommand() {
-        ("add", Some(add_matches)) => {
-            let name = add_matches.value_of("name");
-            let group = add_matches.value_of("group");
-            cmd::add(&cmd::parse_name(name), group)
+        ("add", Some(matches)) => {
+            let name = cmd::parse_name(matches.value_of("name"));
+            let group = matches.value_of("group");
+            cmd::add(&name, group)
         }
-        ("rm", Some(rm_matches)) => {
-            let name = rm_matches.value_of("name");
-            let group = rm_matches.value_of("group");
+        ("rm", Some(matches)) => {
+            let name = matches.value_of("name");
+            let group = matches.value_of("group");
             cmd::rm(name, group)
         }
-        ("list", Some(list_matches)) => {
-            let group = list_matches.value_of("group");
-            if list_matches.value_of("all").is_some() {
-                cmd::list_all()
+        ("list", Some(matches)) => {
+            if matches.is_present("all") {
+                cmd::list(ListMatches::All)
+            } else if matches.is_present("group") {
+                let group = matches.value_of("group");
+                cmd::list(ListMatches::Group(group.unwrap().to_string()))
             } else {
-                cmd::list(group)
+                cmd::list(ListMatches::Groupless)
             }
         }
         ("", None) => {
