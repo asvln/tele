@@ -1,6 +1,6 @@
-use crate::table;
-use crate::waypoints::{List, Waypoint, Filesystem};
 use crate::cli::ListMatches;
+use crate::table;
+use crate::waypoints::{Filesystem, List, Waypoint};
 
 pub fn add(name: &str, group: Option<&str>) {
     let list = List::load();
@@ -21,14 +21,14 @@ pub fn rm(name: Option<&str>, group: Option<&str>) {
         let list = List::load();
         match list.remove_entry(&n) {
             Ok(l) => List::save(&l),
-            Err(e) => println!("{}", e)
+            Err(e) => println!("{}", e),
         }
     }
     if let Some(g) = group {
         let list = List::load();
         match list.remove_group(&g) {
             Ok(l) => List::save(&l),
-            Err(e) => println!("{}", e)
+            Err(e) => println!("{}", e),
         }
     }
 }
@@ -65,7 +65,7 @@ pub fn tele(name: &str) {
             println!("{}", &w.path);
             std::process::exit(2)
         }
-        None => println!("'{}' is not an assigned group", name)
+        None => println!("'{}' is not an assigned group", name),
     }
 }
 

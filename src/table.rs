@@ -1,6 +1,6 @@
-use cli_table::{Table, Row, Cell};
-use cli_table::format::*;
 use crate::waypoints::List;
+use cli_table::format::*;
+use cli_table::{Cell, Row, Table};
 
 macro_rules! row {
     ($($name:expr, $fmt:expr;)*) => {
@@ -11,25 +11,21 @@ macro_rules! row {
 }
 
 pub fn print_all(list: List) {
-    let mut rows = vec![
-        row! {
-            "name", head_format();
-            "group", head_format();
-            "path", head_format();
-        }
-    ];
+    let mut rows = vec![row! {
+        "name", head_format();
+        "group", head_format();
+        "path", head_format();
+    }];
     for w in &list.0 {
         let g = match &w.group {
             Some(g) => g,
-            None => ""
+            None => "",
         };
-        rows.push(
-            row! {
-                &w.name, Default::default();
-                &g, Default::default();
-                &w.path, Default::default();
-            }
-        )
+        rows.push(row! {
+            &w.name, Default::default();
+            &g, Default::default();
+            &w.path, Default::default();
+        })
     }
     Table::new(rows, table_format())
         .print_stdout()
@@ -37,19 +33,15 @@ pub fn print_all(list: List) {
 }
 
 pub fn print_group(list: List, group: &str) {
-    let mut rows = vec![
-        row! {
-            "name", head_format();
-            group, head_format();
-        }
-    ];
+    let mut rows = vec![row! {
+        "name", head_format();
+        group, head_format();
+    }];
     for w in &list.0 {
-        rows.push(
-            row! {
-                &w.name, Default::default();
-                &w.path, Default::default();
-            }
-        )
+        rows.push(row! {
+            &w.name, Default::default();
+            &w.path, Default::default();
+        })
     }
     Table::new(rows, table_format())
         .print_stdout()
@@ -57,19 +49,15 @@ pub fn print_group(list: List, group: &str) {
 }
 
 pub fn print_groupless(list: List) {
-    let mut rows = vec![
-        row! {
-            "name", head_format();
-            "path", head_format();
-        }
-    ];
+    let mut rows = vec![row! {
+        "name", head_format();
+        "path", head_format();
+    }];
     for w in &list.0 {
-        let mut r = vec![
-            row! {
-                &w.name, Default::default();
-                &w.path, Default::default();
-            }
-        ];
+        let mut r = vec![row! {
+            &w.name, Default::default();
+            &w.path, Default::default();
+        }];
         rows.append(&mut r)
     }
     Table::new(rows, table_format())
@@ -91,7 +79,7 @@ fn table_format() -> TableFormat {
 
 fn border_style() -> Border {
     Border::builder()
-        .top(Some(HorizontalLine::new('┌', '┐','┬','─')))
+        .top(Some(HorizontalLine::new('┌', '┐', '┬', '─')))
         .bottom(Some(HorizontalLine::new('└', '┘', '┴', '─')))
         .left(Some(VerticalLine::new('│')))
         .right(Some(VerticalLine::new('│')))
@@ -101,6 +89,6 @@ fn border_style() -> Border {
 fn seperator_style() -> Separator {
     Separator::builder()
         .column(Some(VerticalLine::new('│')))
-        .title(Some(HorizontalLine::new('├', '┤','┼','─')))
+        .title(Some(HorizontalLine::new('├', '┤', '┼', '─')))
         .build()
 }

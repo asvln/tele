@@ -1,5 +1,5 @@
-use clap::{App, AppSettings, Arg, SubCommand};
 use crate::cmd;
+use clap::{App, AppSettings, Arg, SubCommand};
 
 pub fn parse_args() -> clap::ArgMatches<'static> {
     App::new("tele")
@@ -22,7 +22,7 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .index(1)
                 .required_unless("add")
                 .required_unless("rm")
-                .required_unless("list")
+                .required_unless("list"),
         )
         // add
         .subcommand(
@@ -41,8 +41,8 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .short("g")
                         .long("group")
                         .takes_value(true),
-                        // .multiple(true)
-                )
+                    // .multiple(true)
+                ),
         )
         // rm
         .subcommand(
@@ -50,10 +50,10 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .about("Remove from waypoints")
                 .arg(
                     Arg::with_name("name")
-                    .help("Waypoint name to be removed")
-                    .index(1)
-                    .required_unless("group")
-                    .conflicts_with("group"),
+                        .help("Waypoint name to be removed")
+                        .index(1)
+                        .required_unless("group")
+                        .conflicts_with("group"),
                 )
                 .arg(
                     Arg::with_name("group")
@@ -62,8 +62,8 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .long("group")
                         .takes_value(true)
                         .empty_values(false),
-                        // .multiple(true),
-                )
+                    // .multiple(true),
+                ),
         )
         // list
         .subcommand(
@@ -71,18 +71,18 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .about("Print waypoints")
                 .arg(
                     Arg::with_name("group")
-                    .help("List only specified group")
-                    .short("g")
-                    .long("group")
-                    .takes_value(true)
-                    .empty_values(false),
+                        .help("List only specified group")
+                        .short("g")
+                        .long("group")
+                        .takes_value(true)
+                        .empty_values(false),
                 )
                 .arg(
                     Arg::with_name("all")
-                    .help("List all waypoints")
-                    .short("a")
-                    .long("all"),
-                )
+                        .help("List all waypoints")
+                        .short("a")
+                        .long("all"),
+                ),
         )
         .get_matches()
 }
@@ -118,7 +118,7 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
         ("", None) => {
             let name = matches.value_of("WAYPOINT").unwrap();
             cmd::tele(name)
-        },
+        }
         _ => unreachable!(),
     }
 }

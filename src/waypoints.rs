@@ -1,9 +1,9 @@
+use dirs;
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::PathBuf;
-use dirs;
-use serde::{Deserialize, Serialize};
 
 /// Filesystem
 pub struct Filesystem();
@@ -18,8 +18,7 @@ impl Filesystem {
             .expect("cannot parse working directory")
     }
     pub fn current_dir_name() -> String {
-        let c = env::current_dir()
-            .expect("invalid working directory");
+        let c = env::current_dir().expect("invalid working directory");
         c.file_name()
             .expect("invalid directory name")
             .to_str()
@@ -51,7 +50,7 @@ impl Waypoint {
 pub struct List(pub Vec<Waypoint>);
 
 impl List {
-    pub fn get_waypoint(&self, name: &str) -> Option<&Waypoint>{
+    pub fn get_waypoint(&self, name: &str) -> Option<&Waypoint> {
         self.0.iter().find(|w| w.name == name)
     }
 
@@ -61,10 +60,7 @@ impl List {
 
     pub fn filter_group(&self, group: Option<&str>) -> Option<Self> {
         let g = group.map(str::to_string);
-        let filtered_wps: Vec<Waypoint> = self.0.iter()
-            .filter(|w| w.group == g)
-            .cloned()
-            .collect();
+        let filtered_wps: Vec<Waypoint> = self.0.iter().filter(|w| w.group == g).cloned().collect();
         if !filtered_wps.is_empty() {
             Some(Self(filtered_wps))
         } else {
@@ -85,7 +81,7 @@ impl List {
                 println!("'{}' removed from waypoints", name);
                 Ok(self)
             }
-            None => Err("waypoint was not found")
+            None => Err("waypoint was not found"),
         }
     }
 
@@ -96,7 +92,7 @@ impl List {
                 println!("'{}' removed from waypoints", name);
                 Ok(self)
             }
-            None => Err("no group entries found")
+            None => Err("no group entries found"),
         }
     }
 
@@ -116,8 +112,7 @@ impl List {
             .read_to_string(&mut file_string)
             .expect("error converting list to string");
         // deserialize
-        serde_json::from_str(&file_string)
-            .expect("error deserializing list")
+        serde_json::from_str(&file_string).expect("error deserializing list")
     }
 
     pub fn load_group(group: &str) -> List {
@@ -134,11 +129,9 @@ impl List {
     /// Writes `waypoints.json`
     pub fn save(wps: &List) {
         // serialize
-        let json = serde_json::to_string_pretty(wps)
-            .expect("could not serialize input");
+        let json = serde_json::to_string_pretty(wps).expect("could not serialize input");
         // write file
-        fs::write(List::path(), json)
-            .expect("unable to write list");
+        fs::write(List::path(), json).expect("unable to write list");
     }
 
     /// PathBuf for `waypoints.json`
