@@ -41,10 +41,10 @@ pub fn list(kind: ListMatches) {
         }
         ListMatches::Group(g) => {
             let list = List::load_group(&g);
-            if list.0.is_empty() {
-                println!("no entries for group '{}'", &g)
+            if let Some(l) = list {
+                table::print_group(l, &g)
             } else {
-                table::print_group(list, &g)
+                println!("'{}' is an empty group", &g)
             }
         }
         ListMatches::Groupless => {
@@ -65,7 +65,7 @@ pub fn tele(name: &str) {
             println!("{}", &w.path);
             std::process::exit(2)
         }
-        None => println!("'{}' is not an assigned group", name),
+        None => println!("'{}' is not assigned", name),
     }
 }
 

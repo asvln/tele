@@ -115,10 +115,9 @@ impl List {
         serde_json::from_str(&file_string).expect("error deserializing list")
     }
 
-    pub fn load_group(group: &str) -> List {
+    pub fn load_group(group: &str) -> Option<List> {
         let list = Self::load();
         list.filter_group(Some(group))
-            .expect("group has no entries")
     }
 
     pub fn load_groupless() -> Option<List> {
