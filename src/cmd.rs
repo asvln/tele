@@ -11,7 +11,7 @@ pub fn add(name: &str, group: Option<&str>) {
             let w = Waypoint::new(&name, group);
             let out = list.append_entry(w).clone();
             List::save(&out);
-            println!("waypoint added")
+            println!("'{}' added to waypoints", &name)
         }
     }
 }

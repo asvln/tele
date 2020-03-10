@@ -102,6 +102,7 @@ impl List {
     pub fn load() -> List {
         // create file if it does not exist
         if fs::metadata(Self::path()).is_err() {
+            fs::create_dir_all(Self::config_path());
             fs::write(Self::path(), b"[]")
                 .expect("could not create '~/.config/tele/waypoints.json'")
         }
@@ -134,12 +135,18 @@ impl List {
     }
 
     /// PathBuf for `waypoints.json`
-    fn path() -> PathBuf {
-        // ~/config/tele/waypoints.json
+    fn config_path() -> PathBuf {
+        // ~/config/tele/
         dirs::home_dir()
             .expect("failed to access home directory")
             .join(".config")
             .join("tele")
+    }
+    fn path() -> PathBuf {
+        // ~/config/tele/waypoints.json
+        dirs::home_dir()
+            .expect("failed to access home directory")
+            .join(Self::config_path())
             .join("waypoints.json")
     }
 }

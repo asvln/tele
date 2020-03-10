@@ -30,10 +30,8 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .about("Add working directory to waypoints")
                 .arg(
                     Arg::with_name("name")
-                        .help("Define a custom waypoint name (defaults to current folder name)")
-                        .short("n")
-                        .long("name")
-                        .takes_value(true),
+                        .help("Name of waypoint")
+                        .index(1),
                 )
                 .arg(
                     Arg::with_name("group")
@@ -63,6 +61,26 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .takes_value(true)
                         .empty_values(false),
                     // .multiple(true),
+                ),
+        )
+        // edit
+        .subcommand(
+            SubCommand::with_name("edit")
+                .about("Edit an existing waypoint or group")
+                .arg(
+                    Arg::with_name("name")
+                        .help("Define a custom waypoint name (defaults to current folder name)")
+                        .short("n")
+                        .long("name")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("group")
+                        .help("Add waypoint to a custom group")
+                        .short("g")
+                        .long("group")
+                        .takes_value(true),
+                    // .multiple(true)
                 ),
         )
         // list
