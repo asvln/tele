@@ -29,7 +29,7 @@ t NAME
 
 # add current directory to waypoints
 t add
-t add -n NAME  # define a custom name (default name is current directory)
+t add NAME     # optionally define a custom name (default name is current directory)
 t add -g GROUP # add to group
 
 # remove waypoint
