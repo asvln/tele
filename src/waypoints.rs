@@ -242,11 +242,11 @@ impl List {
         list.filter_group(None)
     }
 
-    /// Writes `waypoints.json`
-    pub fn save(wps: &List) {
-        // serialize
-        let json = serde_json::to_string_pretty(wps).expect("could not serialize input");
-        // write file
+    /// Sorts waypoints and writes List to `waypoints.json`
+    pub fn save(mut wps: List) {
+        wps.0.sort_by(|a, b| a.name.cmp(&b.name));
+        wps.0.sort_by(|a, b| a.group.cmp(&b.group));
+        let json = serde_json::to_string_pretty(&wps).expect("could not serialize input");
         fs::write(List::path(), json).expect("unable to write list");
     }
 
