@@ -30,6 +30,13 @@ pub fn rm(names: Option<Vec<&str>>, groups: Option<Vec<&str>>) {
     }
 }
 
+pub fn dissolve(groups: Vec<&str>) {
+    let list = List::load();
+    if let Ok(l) = list.dissolve_groups(groups) {
+        l.save()
+    }
+}
+
 pub fn edit(wp: &str, kind: EditMatches) {
     match kind {
         EditMatches::Name(name) => {

@@ -219,6 +219,29 @@ impl List {
         }
     }
 
+    pub fn dissolve_groups(mut self, groups: Vec<&str>) -> Outcome<Self> {
+        for g in groups {
+            if self.get_group(g).is_some() {
+                let mut i = 0;
+                while i != self.0.len() {
+                    if self.0.get(i).unwrap().group == Some(g.to_string()) {
+                        let n = &self.0.get(i).unwrap().name.clone();
+                        let new_wp = self.0.get(i).unwrap().clone().ungroup();
+                        self.0.remove(i);
+                        self.0.push(new_wp);
+                        println!("'{}' ungrouped", &n)
+                    } else {
+                        i += 1;
+                    }
+                }
+                println!("group '{}' has been dissolved", &g)
+            } else {
+                println!("successfully dissolved groups")
+            }
+        }
+        Ok(self)
+    }
+
     /// Load `waypoints.json`
     pub fn load() -> List {
         // create file if it does not exist

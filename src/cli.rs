@@ -95,15 +95,15 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .long("group")
                         .multiple(true)
                         .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("dissolve")
+                        .help("Dissolve a group (retains waypoints)")
+                        .short("d")
+                        .long("dissolve")
+                        .multiple(true)
+                        .takes_value(true),
                 ),
-                // .arg(
-                //     Arg::with_name("dissolve")
-                //         .help("Dissolve a group (retains waypoints)")
-                //         .short("d")
-                //         .long("dissolve")
-                //         .multiple(true)
-                //         .takes_value(true),
-                // ),
         )
         // list
         .subcommand(
@@ -156,6 +156,10 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
             if matches.is_present("group") {
                 let groups: Vec<_> = matches.values_of("group").unwrap().collect();
                 cmd::rm(None, Some(groups))
+            }
+            if matches.is_present("dissolve") {
+                let groups: Vec<_> = matches.values_of("dissolve").unwrap().collect();
+                cmd::dissolve(groups)
             }
         }
         ("list", Some(matches)) => {
