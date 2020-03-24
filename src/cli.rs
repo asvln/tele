@@ -70,7 +70,14 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 )
                 .arg(
                     Arg::with_name("group")
-                        .help("Add waypoint to a custom group")
+                        .help("Optionally add to group")
+                        .index(2)
+                        .required(false)
+                        .conflicts_with("group-flag"),
+                )
+                .arg(
+                    Arg::with_name("group-flag")
+                        .hidden(true)
                         .short("g")
                         .long("group")
                         .takes_value(true),
