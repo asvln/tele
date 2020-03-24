@@ -24,6 +24,33 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .required_unless("rm")
                 .required_unless("list"),
         )
+        // edit
+        .arg(
+            Arg::with_name("name")
+                .help("Change waypoint name")
+                .short("n")
+                .long("name")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("path")
+                .help("Change waypoint path (default is working directory)")
+                .short("p")
+                .long("path"),
+        )
+        .arg(
+            Arg::with_name("group")
+                .help("Change waypoint group")
+                .short("g")
+                .long("group")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("ungroup")
+                .help("Remove waypoint from it's group")
+                .short("u")
+                .long("ungroup"),
+        )
         // add
         .subcommand(
             SubCommand::with_name("add")
@@ -39,7 +66,6 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .short("g")
                         .long("group")
                         .takes_value(true),
-                    // .multiple(true)
                 ),
         )
         // rm
@@ -60,27 +86,6 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .long("group")
                         .takes_value(true)
                         .empty_values(false),
-                    // .multiple(true),
-                ),
-        )
-        // edit
-        .subcommand(
-            SubCommand::with_name("edit")
-                .about("Edit an existing waypoint or group")
-                .arg(
-                    Arg::with_name("name")
-                        .help("Define a custom waypoint name (defaults to current folder name)")
-                        .short("n")
-                        .long("name")
-                        .takes_value(true),
-                )
-                .arg(
-                    Arg::with_name("group")
-                        .help("Add waypoint to a custom group")
-                        .short("g")
-                        .long("group")
-                        .takes_value(true),
-                    // .multiple(true)
                 ),
         )
         // list
@@ -105,6 +110,13 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
         .get_matches()
 }
 
+pub enum EditMatches {
+    Name(String),
+    Path(Option<String>),
+    Group(String),
+    Ungroup,
+}
+
 pub enum ListMatches {
     Groupless,
     All,
@@ -127,16 +139,29 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
             if matches.is_present("all") {
                 cmd::list(ListMatches::All)
             } else if matches.is_present("group") {
-                let group = matches.value_of("group");
-                cmd::list(ListMatches::Group(group.unwrap().to_string()))
+                let group = matches.value_of("group").unwrap();
+                cmd::list(ListMatches::Group(group.to_string()))
             } else {
                 cmd::list(ListMatches::Groupless)
             }
         }
         ("", None) => {
-            let name = matches.value_of("WAYPOINT").unwrap();
-            cmd::tele(name)
+            let wp = matches.value_of("WAYPOINT").unwrap();
+            if matches.is_present("name") {
+                let name = matches.value_of("name").unwrap();
+                cmd::edit(wp, EditMatches::Name(name.to_string()))
+            } else if matches.is_present("path") {
+                let path = matches.value_of("path").map(str::to_string);
+                cmd::edit(wp, EditMatches::Path(path))
+            } else if matches.is_present("group") {
+                let group = matches.value_of("group").unwrap();
+                cmd::edit(wp, EditMatches::Group(group.to_string()))
+            } else if matches.is_present("ungroup"){
+                cmd::edit(wp, EditMatches::Ungroup)
+            } else {
+                cmd::tele(wp)
+            }
         }
-        _ => unreachable!(),
+        _ => unreachable!()
     }
 }

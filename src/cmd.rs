@@ -1,16 +1,15 @@
-use crate::cli::ListMatches;
+use crate::cli::{EditMatches, ListMatches};
 use crate::table;
 use crate::waypoints::{Filesystem, List, Waypoint};
 
 pub fn add(name: &str, group: Option<&str>) {
     let list = List::load();
-
     match list.get_waypoint(&name) {
         Some(w) => println!("'{}' is already assigned to: {}", &name, &w.path),
         None => {
             let w = Waypoint::new(&name, group);
-            let out = list.append_entry(w).clone();
-            List::save(&out);
+            let l = list.append_entry(w).clone();
+            List::save(l);
             println!("'{}' added to waypoints", &name)
         }
     }
@@ -20,15 +19,55 @@ pub fn rm(name: Option<&str>, group: Option<&str>) {
     if let Some(n) = name {
         let list = List::load();
         match list.remove_entry(&n) {
-            Ok(l) => List::save(&l),
+            Ok(l) => List::save(l),
             Err(e) => println!("{}", e),
         }
     }
     if let Some(g) = group {
         let list = List::load();
         match list.remove_group(&g) {
-            Ok(l) => List::save(&l),
+            Ok(l) => List::save(l),
             Err(e) => println!("{}", e),
+        }
+    }
+}
+
+pub fn edit(wp: &str, kind: EditMatches) {
+    match kind {
+        EditMatches::Name(name) => {
+            let list = List::load();
+            match list.rename_entry(wp, &name) {
+                Ok(l) => List::save(l),
+                Err(e) => println!("{}", e),
+            }
+        }
+        EditMatches::Path(path) => {
+            let list = List::load();
+            if let Some(p) = path {
+                match list.repath_entry(wp, &p) {
+                    Ok(l) => List::save(l),
+                    Err(e) => println!("{}", e),
+                }
+            } else {
+                match list.repath_entry(wp, &Filesystem::current_dir()) {
+                    Ok(l) => List::save(l),
+                    Err(e) => println!("{}", e),
+                }
+            }
+        }
+        EditMatches::Group(group) => {
+            let list = List::load();
+            match list.regroup_entry(wp, &group) {
+                Ok(l) => List::save(l),
+                Err(e) => println!("{}", e),
+            }
+        }
+        EditMatches::Ungroup => {
+            let list = List::load();
+            match list.ungroup_entry(wp) {
+                Ok(l) => List::save(l),
+                Err(e) => println!("{}", e),
+            }
         }
     }
 }
