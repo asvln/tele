@@ -83,19 +83,27 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .settings(global_settings!())
                 .arg(
                     Arg::with_name("name")
-                        .help("Waypoint name to be removed")
-                        .index(1)
+                        .help("Waypoint names to be removed")
+                        .multiple(true)
                         .required_unless("group")
-                        .conflicts_with("group"),
+                        .required_unless("dissolve"),
                 )
                 .arg(
                     Arg::with_name("group")
-                        .help("Remove all specified group entries")
+                        .help("Remove waypoints in specified groups")
                         .short("g")
                         .long("group")
-                        .takes_value(true)
-                        .empty_values(false),
+                        .multiple(true)
+                        .takes_value(true),
                 ),
+                // .arg(
+                //     Arg::with_name("dissolve")
+                //         .help("Dissolve a group (retains waypoints)")
+                //         .short("d")
+                //         .long("dissolve")
+                //         .multiple(true)
+                //         .takes_value(true),
+                // ),
         )
         // list
         .subcommand(
@@ -141,9 +149,14 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
             cmd::add(&name, group)
         }
         ("rm", Some(matches)) => {
-            let name = matches.value_of("name");
-            let group = matches.value_of("group");
-            cmd::rm(name, group)
+            if matches.is_present("name") {
+                let names: Vec<_> = matches.values_of("name").unwrap().collect();
+                cmd::rm(Some(names), None)
+            }
+            if matches.is_present("group") {
+                let groups: Vec<_> = matches.values_of("group").unwrap().collect();
+                cmd::rm(None, Some(groups))
+            }
         }
         ("list", Some(matches)) => {
             if matches.is_present("all") {

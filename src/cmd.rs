@@ -3,31 +3,29 @@ use crate::table;
 use crate::waypoints::{Filesystem, List, Waypoint};
 
 pub fn add(name: &str, group: Option<&str>) {
-    let list = List::load();
-    match list.get_waypoint(&name) {
+    let mut list = List::load();
+    match list.get_entry(&name) {
         Some(w) => println!("'{}' is already assigned to: {}", &name, &w.path),
         None => {
             let w = Waypoint::new(&name, group);
-            let l = list.append_entry(w).clone();
-            List::save(l);
+            list.0.push(w);
+            list.save();
             println!("'{}' added to waypoints", &name)
         }
     }
 }
 
-pub fn rm(name: Option<&str>, group: Option<&str>) {
-    if let Some(n) = name {
+pub fn rm(names: Option<Vec<&str>>, groups: Option<Vec<&str>>) {
+    if let Some(req) = names {
         let list = List::load();
-        match list.remove_entry(&n) {
-            Ok(l) => List::save(l),
-            Err(e) => println!("{}", e),
+        if let Ok(l) = list.remove_entries(req) {
+            l.save()
         }
     }
-    if let Some(g) = group {
+    if let Some(req) = groups {
         let list = List::load();
-        match list.remove_group(&g) {
-            Ok(l) => List::save(l),
-            Err(e) => println!("{}", e),
+        if let Ok(l) = list.remove_group(req) {
+            l.save()
         }
     }
 }
@@ -36,37 +34,32 @@ pub fn edit(wp: &str, kind: EditMatches) {
     match kind {
         EditMatches::Name(name) => {
             let list = List::load();
-            match list.rename_entry(wp, &name) {
-                Ok(l) => List::save(l),
-                Err(e) => println!("{}", e),
+            if let Ok(l) = list.rename_entry(wp, &name) {
+                l.save()
             }
         }
         EditMatches::Path(path) => {
             let list = List::load();
             if let Some(p) = path {
-                match list.repath_entry(wp, &p) {
-                    Ok(l) => List::save(l),
-                    Err(e) => println!("{}", e),
+                if let Ok(l) = list.repath_entry(wp, &p) {
+                    l.save()
                 }
             } else {
-                match list.repath_entry(wp, &Filesystem::current_dir()) {
-                    Ok(l) => List::save(l),
-                    Err(e) => println!("{}", e),
+                if let Ok(l) = list.repath_entry(wp, &Filesystem::current_dir()) {
+                    l.save()
                 }
             }
         }
         EditMatches::Group(group) => {
             let list = List::load();
-            match list.regroup_entry(wp, &group) {
-                Ok(l) => List::save(l),
-                Err(e) => println!("{}", e),
+            if let Ok(l) = list.regroup_entry(wp, &group) {
+                l.save()
             }
         }
         EditMatches::Ungroup => {
             let list = List::load();
-            match list.ungroup_entry(wp) {
-                Ok(l) => List::save(l),
-                Err(e) => println!("{}", e),
+            if let Ok(l) = list.ungroup_entry(wp) {
+                l.save()
             }
         }
     }
@@ -76,7 +69,11 @@ pub fn list(kind: ListMatches) {
     match kind {
         ListMatches::All => {
             let list = List::load();
-            table::print_all(list)
+            if list.0.is_empty() {
+                println!("no waypoints defined")
+            } else {
+                table::print_all(list)
+            }
         }
         ListMatches::Group(g) => {
             let list = List::load_group(&g);
@@ -91,7 +88,7 @@ pub fn list(kind: ListMatches) {
             if let Some(l) = list {
                 table::print_groupless(l)
             } else {
-                println!("no waypoints defined")
+                self::list(ListMatches::All)
             }
         }
     }
@@ -99,7 +96,7 @@ pub fn list(kind: ListMatches) {
 
 pub fn tele(name: &str) {
     let list = List::load();
-    match list.get_waypoint(name) {
+    match list.get_entry(name) {
         Some(w) => {
             println!("{}", &w.path);
             std::process::exit(2)

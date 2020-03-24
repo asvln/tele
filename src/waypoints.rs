@@ -5,10 +5,11 @@ use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::PathBuf;
 
+type Outcome<T> = Result<T, ()>;
+const INVALID_WP_NAME: &'static str = "is not a valid waypoint";
+
 /// Filesystem
 pub struct Filesystem();
-
-const INVALID_WP_NAME: &'static str = "waypoint was not found";
 
 impl Filesystem {
     /// Returns the current working directory as a String
@@ -82,18 +83,19 @@ pub struct List(pub Vec<Waypoint>);
 
 impl List {
     // query
-    pub fn get_waypoint(&self, name: &str) -> Option<&Waypoint> {
+    pub fn get_entry(&self, name: &str) -> Option<&Waypoint> {
         self.0.iter().find(|w| w.name == name)
     }
 
     pub fn get_group(&self, group: &str) -> Option<&Waypoint> {
-        self.0.iter().find(|w| w.name == group)
+        self.0.iter().find(|w| w.group == Some(group.to_string()))
     }
 
     fn get_index(&self, name: &str) -> Option<usize> {
         self.0.iter().position(|w| w.name == name)
     }
 
+    // filter
     pub fn filter_group(&self, group: Option<&str>) -> Option<Self> {
         let g = group.map(str::to_string);
         let filtered_wps: Vec<Waypoint> = self.0.iter().filter(|w| w.group == g).cloned().collect();
@@ -104,41 +106,47 @@ impl List {
         }
     }
 
-    pub fn append_entry(self, wp: Waypoint) -> Self {
-        let mut wps = self.0;
-        wps.push(wp);
-        Self(wps)
-    }
-
-    pub fn remove_entry(mut self, name: &str) -> Result<Self, &str> {
-        match self.get_index(name) {
-            Some(i) => {
-                self.0.remove(i);
-                println!("'{}' removed from waypoints", name);
-                Ok(self)
+    // delete
+    pub fn remove_entries(mut self, names: Vec<&str>) -> Outcome<Self> {
+        for n in names {
+            let mut i = 0;
+            while i != self.0.len() {
+                if self.0.get(i).unwrap().name == n.to_string() {
+                    let n = &self.0.get(i).unwrap().name.clone();
+                    self.0.remove(i);
+                    println!("'{}' removed from waypoints", &n)
+                } else {
+                    i += 1;
+                }
             }
-            None => Err(INVALID_WP_NAME),
         }
+        Ok(self)
     }
 
-    pub fn remove_group(mut self, group: &str) -> Result<Self, &str> {
-        match self.get_group(group) {
-            Some(_) => {
+    pub fn remove_group(mut self, groups: Vec<&str>) -> Outcome<Self> {
+        for g in groups {
+            if self.get_group(g).is_some() {
                 let mut i = 0;
                 while i != self.0.len() {
-                    if self.0.get(i).unwrap().group == Some(group.to_string()) {
+                    if self.0.get(i).unwrap().group == Some(g.to_string()) {
+                        let n = &self.0.get(i).unwrap().name.clone();
                         self.0.remove(i);
+                        println!("'{}' removed from waypoints", &n)
                     } else {
                         i += 1;
                     }
                 }
-                Ok(self)
+                println!("group '{}' removed", &g)
+
+            } else {
+                println!("group '{}' is not defined", &g)
             }
-            None => Err("no group entries found"),
         }
+        Ok(self)
     }
 
-    pub fn rename_entry(mut self, name: &str, new_name: &str) -> Result<Self, &'static str> {
+    // update
+    pub fn rename_entry(mut self, name: &str, new_name: &str) -> Outcome<Self> {
         match self.get_index(name) {
             Some(i) => {
                 let new_wp = self.0.get(i).unwrap().clone().rename(new_name);
@@ -147,11 +155,11 @@ impl List {
                 println!("'{}' renamed to '{}'", name, new_name);
                 Ok(self)
             }
-            None => Err(INVALID_WP_NAME),
+            None => Err(println!("'{}' {}", name, INVALID_WP_NAME)),
         }
     }
 
-    pub fn repath_entry(mut self, name: &str, path: &str) -> Result<Self, &'static str> {
+    pub fn repath_entry(mut self, name: &str, path: &str) -> Outcome<Self> {
         match self.get_index(name) {
             Some(i) => {
                 let old_path = self.0.get(i).unwrap().path.clone();
@@ -164,11 +172,11 @@ impl List {
                     );
                 Ok(self)
             }
-            None => Err(INVALID_WP_NAME),
+            None => Err(println!("'{}' {}", name, INVALID_WP_NAME)),
         }
     }
 
-    pub fn regroup_entry(mut self, name: &str, group: &str) -> Result<Self, &'static str> {
+    pub fn regroup_entry(mut self, name: &str, group: &str) -> Outcome<Self> {
         match self.get_index(name) {
             Some(i) => {
                 if let Some(old_group) = self.0.get(i).unwrap().group.clone() {
@@ -189,11 +197,11 @@ impl List {
                     Ok(self)
                 }
             }
-            None => Err(INVALID_WP_NAME),
+            None => Err(println!("'{}' {}", name, INVALID_WP_NAME)),
         }
     }
 
-    pub fn ungroup_entry(mut self, name: &str) -> Result<Self, &'static str> {
+    pub fn ungroup_entry(mut self, name: &str) -> Outcome<Self> {
         match self.get_index(name) {
             Some(i) => {
                 if let Some(old_group) = self.0.get(i).unwrap().clone().group {
@@ -204,10 +212,10 @@ impl List {
                     println!("'{}' has been removed from group '{}'", name, old_group);
                     Ok(self)
                 } else {
-                    Err("waypoint does not have a group")
+                    Err(println!("'{}' does not have a group", name))
                 }
             }
-            None => Err(INVALID_WP_NAME),
+            None => Err(println!("'{}' {}", name, INVALID_WP_NAME)),
         }
     }
 
@@ -243,23 +251,23 @@ impl List {
     }
 
     /// Sorts waypoints and writes List to `waypoints.json`
-    pub fn save(mut wps: List) {
-        wps.0.sort_by(|a, b| a.name.cmp(&b.name));
-        wps.0.sort_by(|a, b| a.group.cmp(&b.group));
-        let json = serde_json::to_string_pretty(&wps).expect("could not serialize input");
+    pub fn save(mut self) {
+        self.0.sort_by(|a, b| a.name.cmp(&b.name));
+        self.0.sort_by(|a, b| a.group.cmp(&b.group));
+        let json = serde_json::to_string_pretty(&self).expect("could not serialize input");
         fs::write(List::path(), json).expect("unable to write list");
     }
 
     /// PathBuf for `waypoints.json`
+    /// ~/config/tele/
     fn config_path() -> PathBuf {
-        // ~/config/tele/
         dirs::home_dir()
             .expect("failed to access home directory")
             .join(".config")
             .join("tele")
     }
+    /// ~/config/tele/waypoints.json
     fn path() -> PathBuf {
-        // ~/config/tele/waypoints.json
         dirs::home_dir()
             .expect("failed to access home directory")
             .join(Self::config_path())
