@@ -1,19 +1,26 @@
 use crate::cmd;
 use clap::{App, AppSettings, Arg, SubCommand};
 
+macro_rules! global_settings {
+    () => {
+        &[
+            AppSettings::UnifiedHelpMessage,
+            AppSettings::DeriveDisplayOrder,
+            AppSettings::ColoredHelp,
+            AppSettings::ColorAlways,
+        ]
+    }
+}
 pub fn parse_args() -> clap::ArgMatches<'static> {
     App::new("tele")
         .version(crate_version!())
         .about("Quickly `cd` into commonly used directories.")
+        .settings(global_settings!())
         .settings(&[
             AppSettings::GlobalVersion,
             AppSettings::ArgRequiredElseHelp,
-            AppSettings::ColorAlways,
-            AppSettings::ColoredHelp,
             AppSettings::SubcommandsNegateReqs,
             AppSettings::VersionlessSubcommands,
-            AppSettings::UnifiedHelpMessage,
-            AppSettings::DeriveDisplayOrder,
         ])
         // tele
         .arg(
@@ -55,6 +62,7 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
         .subcommand(
             SubCommand::with_name("add")
                 .about("Add working directory to waypoints")
+                .settings(global_settings!())
                 .arg(
                     Arg::with_name("name")
                         .help("Name of waypoint")
@@ -71,7 +79,8 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
         // rm
         .subcommand(
             SubCommand::with_name("rm")
-                .about("Remove from waypoints")
+                .about("Remove waypoints")
+                .settings(global_settings!())
                 .arg(
                     Arg::with_name("name")
                         .help("Waypoint name to be removed")
@@ -92,6 +101,7 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
         .subcommand(
             SubCommand::with_name("list")
                 .about("Print waypoints")
+                .settings(global_settings!())
                 .arg(
                     Arg::with_name("group")
                         .help("List only specified group")
