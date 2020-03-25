@@ -1,5 +1,5 @@
 # tele
-> Rust cli app to quickly define and `cd` to commonly used directories.
+`tele` is an ergonomic way to quickly define and `cd` into commonly used directories; written in Rust.
 
 ## Installing
 Compile and install the binary with cargo.
@@ -20,27 +20,7 @@ function t() {
 }
 ```
 
-## How to use
-All waypoints are saved in `~/.config/tele/waypoints.json`
-
-```bash
-# teleport to waypoint
-t NAME
-
-# add current directory to waypoints
-t add
-t add NAME     # optionally define a custom name (default name is current directory)
-t add -g GROUP # add to group
-
-# remove waypoint
-t rm NAME
-t rm -g GROUP  # remove all entries in group
-
-# prints waypoints
-t list          # prints ungrouped entries
-t list -a       # prints all entries
-t list -g GROUP # prints group entries
-```
+Reload your shell and simply type `t` in your terminal to get started.
 
 ## License
 This project is licensed under GNU GPL-3.0.
