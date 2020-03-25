@@ -1,6 +1,7 @@
 use crate::cli::{EditMatches, ListMatches};
 use crate::table;
-use crate::waypoints::{Filesystem, List, Waypoint};
+use crate::waypoints::{List, Waypoint};
+use crate::config::Filesystem;
 
 pub fn add(name: &str, group: Option<&str>) {
     let mut list = List::load();

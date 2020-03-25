@@ -1,4 +1,5 @@
 use crate::cmd;
+use crate::config::Config;
 use clap::{App, AppSettings, Arg, SubCommand};
 
 macro_rules! global_settings {
@@ -118,6 +119,12 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .about("Print waypoints")
                 .settings(global_settings!())
                 .arg(
+                    Arg::with_name("all")
+                        .help("List all waypoints")
+                        .short("a")
+                        .long("all"),
+                )
+                .arg(
                     Arg::with_name("group")
                         .help("List only specified group")
                         .short("g")
@@ -126,10 +133,18 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                         .empty_values(false),
                 )
                 .arg(
-                    Arg::with_name("all")
-                        .help("List all waypoints")
-                        .short("a")
-                        .long("all"),
+                    Arg::with_name("ungrouped")
+                        .help("List all ungrouped waypoints")
+                        .short("u")
+                        .long("ungrouped"),
+                )
+                .arg(
+                    Arg::with_name("default-view")
+                        .help("Sets the default list view")
+                        .possible_values(&["all", "ungrouped"])
+                        .long("default-view")
+                        .takes_value(true)
+                        .empty_values(false),
                 ),
         )
         .get_matches()
@@ -152,8 +167,15 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
     match matches.subcommand() {
         ("add", Some(matches)) => {
             let name = cmd::parse_name(matches.value_of("name"));
-            let group = matches.value_of("group");
-            cmd::add(&name, group)
+            if matches.is_present("group") {
+                let group = matches.value_of("group");
+                cmd::add(&name, group)
+            } else if matches.is_present("group-flag") {
+                let group = matches.value_of("group-flag");
+                cmd::add(&name, group)
+            } else {
+                cmd::add(&name, None)
+            }
         }
         ("rm", Some(matches)) => {
             if matches.is_present("name") {
@@ -170,13 +192,23 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
             }
         }
         ("list", Some(matches)) => {
-            if matches.is_present("all") {
+            if matches.is_present("default-view") {
+                let view = matches.value_of("default-view").unwrap();
+                Config::set("default_list".to_string(), view.to_string());
+                println!("default list view set to '{}'", &view)
+            } else if matches.is_present("all") {
                 cmd::list(ListMatches::All)
             } else if matches.is_present("group") {
                 let group = matches.value_of("group").unwrap();
                 cmd::list(ListMatches::Group(group.to_string()))
-            } else {
+            } else if matches.is_present("ungrouped"){
                 cmd::list(ListMatches::Groupless)
+            } else {
+                if Config::check("default_list") == Some("all".to_string()) {
+                    cmd::list(ListMatches::All)
+                } else {
+                    cmd::list(ListMatches::Groupless)
+                }
             }
         }
         ("", None) => {

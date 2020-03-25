@@ -3,6 +3,7 @@ extern crate clap;
 
 mod cli;
 mod cmd;
+mod config;
 mod table;
 mod waypoints;
 

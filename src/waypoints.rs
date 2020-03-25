@@ -1,35 +1,10 @@
-use dirs;
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::fs::{self, File};
 use std::io::prelude::*;
-use std::path::PathBuf;
-
+use crate::config::Filesystem;
 type Outcome<T> = Result<T, ()>;
-const INVALID_WP_NAME: &'static str = "is not a valid waypoint";
+const INVALID_WP_NAME: &'static str = "is not a waypoint";
 
-/// Filesystem
-pub struct Filesystem();
-
-impl Filesystem {
-    /// Returns the current working directory as a String
-    pub fn current_dir() -> String {
-        env::current_dir()
-            .expect("invalid working directory")
-            .into_os_string()
-            .into_string()
-            .expect("cannot parse working directory")
-    }
-    /// Returns the current working folder name as a String
-    pub fn current_dir_name() -> String {
-        let c = env::current_dir().expect("invalid working directory");
-        c.file_name()
-            .expect("invalid directory name")
-            .to_str()
-            .expect("cannot parse working directory")
-            .to_string()
-    }
-}
 
 /// Waypoint
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -87,7 +62,7 @@ impl List {
         self.0.iter().find(|w| w.name == name)
     }
 
-    pub fn get_group(&self, group: &str) -> Option<&Waypoint> {
+    fn get_group(&self, group: &str) -> Option<&Waypoint> {
         self.0.iter().find(|w| w.group == Some(group.to_string()))
     }
 
@@ -96,7 +71,7 @@ impl List {
     }
 
     // filter
-    pub fn filter_group(&self, group: Option<&str>) -> Option<Self> {
+    fn filter_group(&self, group: Option<&str>) -> Option<Self> {
         let g = group.map(str::to_string);
         let filtered_wps: Vec<Waypoint> = self.0.iter().filter(|w| w.group == g).cloned().collect();
         if !filtered_wps.is_empty() {
@@ -205,8 +180,7 @@ impl List {
         match self.get_index(name) {
             Some(i) => {
                 if let Some(old_group) = self.0.get(i).unwrap().clone().group {
-                    let new_wp = self.0.get(i).unwrap().clone()
-                        .ungroup();
+                    let new_wp = self.0.get(i).unwrap().clone().ungroup();
                     self.0.remove(i);
                     self.0.push(new_wp);
                     println!("'{}' has been removed from group '{}'", name, old_group);
@@ -245,15 +219,15 @@ impl List {
     /// Load `waypoints.json`
     pub fn load() -> List {
         // create file if it does not exist
-        if fs::metadata(Self::path()).is_err() {
-            fs::create_dir_all(Self::config_path())
+        if fs::metadata(Filesystem::waypoints_file()).is_err() {
+            fs::create_dir_all(Filesystem::config_path())
                 .expect("could note create directory '~/.config/tele'");
-            fs::write(Self::path(), b"[]")
+            fs::write(Filesystem::waypoints_file(), b"[]")
                 .expect("could not create file '~/.config/tele/waypoints.json'")
         }
         // read file
         let mut file_string = String::new();
-        File::open(Self::path())
+        File::open(Filesystem::waypoints_file())
             .expect("error opening waypoint list")
             .read_to_string(&mut file_string)
             .expect("error converting list to string");
@@ -278,22 +252,6 @@ impl List {
         self.0.sort_by(|a, b| a.name.cmp(&b.name));
         self.0.sort_by(|a, b| a.group.cmp(&b.group));
         let json = serde_json::to_string_pretty(&self).expect("could not serialize input");
-        fs::write(List::path(), json).expect("unable to write list");
-    }
-
-    /// PathBuf for `waypoints.json`
-    /// ~/config/tele/
-    fn config_path() -> PathBuf {
-        dirs::home_dir()
-            .expect("failed to access home directory")
-            .join(".config")
-            .join("tele")
-    }
-    /// ~/config/tele/waypoints.json
-    fn path() -> PathBuf {
-        dirs::home_dir()
-            .expect("failed to access home directory")
-            .join(Self::config_path())
-            .join("waypoints.json")
+        fs::write(Filesystem::waypoints_file(), json).expect("unable to write list");
     }
 }
