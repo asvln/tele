@@ -73,6 +73,11 @@ pub fn edit(wp: &str, kind: EditMatches) {
     }
 }
 
+pub fn reload_list() {
+    let list = List::load();
+    list.save()
+}
+
 pub fn list(kind: ListMatches) {
     match kind {
         ListMatches::All => {

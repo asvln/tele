@@ -59,6 +59,23 @@ impl Filesystem {
 pub struct Config(HashMap<String, String>);
 
 impl Config {
+    /// Get config key's value
+    pub fn check(key: &str) -> Option<String> {
+        let config = Self::load();
+        if let Some(v) = config.0.get(key) {
+            Some(v.clone().to_owned())
+        } else {
+            None
+        }
+    }
+
+    /// Set config key and value
+    pub fn set(key: String, value: String) {
+        let mut config = Self::load();
+        config.0.insert(key, value);
+        Self::save(config)
+    }
+
     /// Load `config.json`
     pub fn load() -> Config {
         // create file if it does not exist
@@ -78,23 +95,10 @@ impl Config {
         serde_json::from_str(&file_string).expect("error deserializing list")
     }
 
+    /// Saves config file to disk
     pub fn save(self) {
         let json = serde_json::to_string_pretty(&self).expect("could not serialize input");
         fs::write(Filesystem::config_file(), json).expect("unable to write config");
     }
 
-    pub fn check(key: &str) -> Option<String> {
-        let config = Self::load();
-        if let Some(v) = config.0.get(key) {
-            Some(v.clone().to_owned())
-        } else {
-            None
-        }
-    }
-
-    pub fn set(key: String, value: String) {
-        let mut config = Self::load();
-        config.0.insert(key, value);
-        Self::save(config)
-    }
 }

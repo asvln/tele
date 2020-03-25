@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::prelude::*;
-use crate::config::Filesystem;
+use crate::config::{Config, Filesystem};
+
 type Outcome<T> = Result<T, ()>;
 const INVALID_WP_NAME: &'static str = "is not a waypoint";
-
 
 /// Waypoint
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -247,11 +247,29 @@ impl List {
         list.filter_group(None)
     }
 
-    /// Sorts waypoints and writes List to `waypoints.json`
-    pub fn save(mut self) {
-        self.0.sort_by(|a, b| a.name.cmp(&b.name));
-        self.0.sort_by(|a, b| a.group.cmp(&b.group));
-        let json = serde_json::to_string_pretty(&self).expect("could not serialize input");
+    /// Sorts and writes List to `waypoints.json`
+    pub fn save(self) {
+        let l = self.sort().clone();
+        let json = serde_json::to_string_pretty(&l).expect("could not serialize input");
         fs::write(Filesystem::waypoints_file(), json).expect("unable to write list");
+    }
+
+    /// Sorts waypoints
+    fn sort(mut self) -> Self {
+        if let Some(s) = Config::check("default_sort") {
+            if s == "name" {
+                self.0.sort_by(|a, b| a.name.cmp(&b.name));
+                self.0.sort_by(|a, b| a.group.cmp(&b.group));
+                self
+            } else if s == "path" {
+                self.0.sort_by(|a, b| a.path.cmp(&b.path));
+                self.0.sort_by(|a, b| a.group.cmp(&b.group));
+                self
+            } else {
+                self
+            }
+        } else {
+            self
+        }
     }
 }

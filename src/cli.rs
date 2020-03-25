@@ -66,19 +66,19 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .settings(global_settings!())
                 .arg(
                     Arg::with_name("name")
-                        .help("Name of waypoint")
+                        .help("Name of waypoint (defaults to current folder name)")
                         .index(1),
                 )
                 .arg(
                     Arg::with_name("group")
-                        .help("Optionally add to group")
+                        .help("Optionally define group")
                         .index(2)
                         .required(false)
                         .conflicts_with("group-flag"),
                 )
                 .arg(
                     Arg::with_name("group-flag")
-                        .hidden(true)
+                        .help("Define waypoint's group (useful when using default name)")
                         .short("g")
                         .long("group")
                         .takes_value(true),
@@ -106,7 +106,7 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 )
                 .arg(
                     Arg::with_name("dissolve")
-                        .help("Dissolve a group (retains waypoints)")
+                        .help("Dissolve specified groups (retains waypoints)")
                         .short("d")
                         .long("dissolve")
                         .multiple(true)
@@ -116,7 +116,7 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
         // list
         .subcommand(
             SubCommand::with_name("list")
-                .about("Print waypoints")
+                .about("Prints waypoints")
                 .settings(global_settings!())
                 .arg(
                     Arg::with_name("all")
@@ -141,8 +141,16 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
                 .arg(
                     Arg::with_name("default-view")
                         .help("Sets the default list view")
-                        .possible_values(&["all", "ungrouped"])
+                        .possible_values(&["ungrouped", "all"])
                         .long("default-view")
+                        .takes_value(true)
+                        .empty_values(false),
+                )
+                .arg(
+                    Arg::with_name("default-sort")
+                        .help("Sets the default sorting method")
+                        .possible_values(&["name", "path"])
+                        .long("default-sort")
                         .takes_value(true)
                         .empty_values(false),
                 ),
@@ -196,6 +204,11 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
                 let view = matches.value_of("default-view").unwrap();
                 Config::set("default_list".to_string(), view.to_string());
                 println!("default list view set to '{}'", &view)
+            } else if matches.is_present("default-sort") {
+                let sort = matches.value_of("default-sort").unwrap();
+                Config::set("default_sort".to_string(), sort.to_string());
+                cmd::reload_list();
+                println!("list is now sorted by '{}'", &sort)
             } else if matches.is_present("all") {
                 cmd::list(ListMatches::All)
             } else if matches.is_present("group") {
