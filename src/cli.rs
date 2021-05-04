@@ -1,6 +1,7 @@
-use crate::cmd;
-use crate::config::Config;
+use crate::{cmd, waypoints};
+use crate::TELE;
 use clap::{App, AppSettings, Arg, SubCommand};
+use waypoints::ListView;
 
 macro_rules! global_settings {
     () => {
@@ -10,7 +11,7 @@ macro_rules! global_settings {
             AppSettings::ColoredHelp,
             AppSettings::ColorAlways,
         ]
-    }
+    };
 }
 pub fn parse_args() -> clap::ArgMatches<'static> {
     App::new("tele")
@@ -165,11 +166,6 @@ pub enum EditMatches {
     Ungroup,
 }
 
-pub enum ListMatches {
-    Groupless,
-    All,
-    Group(String),
-}
 
 pub fn parse_matches(matches: clap::ArgMatches<'static>) {
     match matches.subcommand() {
@@ -200,27 +196,34 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
             }
         }
         ("list", Some(matches)) => {
+            // set "default-view"
             if matches.is_present("default-view") {
                 let view = matches.value_of("default-view").unwrap();
-                Config::set("default_list".to_string(), view.to_string());
+                TELE.config()
+                    .set("default-view", Some(view))
+                    .unwrap_or(());
                 println!("default list view set to '{}'", &view)
+            // set "default-sort"
             } else if matches.is_present("default-sort") {
                 let sort = matches.value_of("default-sort").unwrap();
-                Config::set("default_sort".to_string(), sort.to_string());
+                TELE.config()
+                    .set("default-sort", Some(sort))
+                    .unwrap_or(());
                 cmd::reload_list();
                 println!("list is now sorted by '{}'", &sort)
-            } else if matches.is_present("all") {
-                cmd::list(ListMatches::All)
-            } else if matches.is_present("group") {
-                let group = matches.value_of("group").unwrap();
-                cmd::list(ListMatches::Group(group.to_string()))
-            } else if matches.is_present("ungrouped"){
-                cmd::list(ListMatches::Groupless)
             } else {
-                if Config::check("default_list") == Some("all".to_string()) {
-                    cmd::list(ListMatches::All)
+                if matches.is_present("all") {
+                    cmd::list(ListView::All)
+                } else if matches.is_present("group") {
+                    let group = matches.value_of("group").unwrap();
+                    cmd::list(ListView::Group(group.to_string()))
+                } else if matches.is_present("ungrouped") {
+                    cmd::list(ListView::Groupless)
                 } else {
-                    cmd::list(ListMatches::Groupless)
+                    match ListView::from_config() {
+                        ListView::All => cmd::list(ListView::All),
+                        _ => cmd::list(ListView::Groupless),
+                    }
                 }
             }
         }
@@ -235,12 +238,12 @@ pub fn parse_matches(matches: clap::ArgMatches<'static>) {
             } else if matches.is_present("group") {
                 let group = matches.value_of("group").unwrap();
                 cmd::edit(wp, EditMatches::Group(group.to_string()))
-            } else if matches.is_present("ungroup"){
+            } else if matches.is_present("ungroup") {
                 cmd::edit(wp, EditMatches::Ungroup)
             } else {
                 cmd::tele(wp)
             }
         }
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }

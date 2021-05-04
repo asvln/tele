@@ -1,7 +1,7 @@
-use crate::cli::{EditMatches, ListMatches};
+use crate::cli::{EditMatches};
 use crate::table;
-use crate::waypoints::{List, Waypoint};
-use crate::config::Filesystem;
+use crate::waypoints::{List, ListView, Waypoint};
+use crate::filesystem::Filesystem;
 
 pub fn add(name: &str, group: Option<&str>) {
     let mut list = List::load();
@@ -78,9 +78,9 @@ pub fn reload_list() {
     list.save()
 }
 
-pub fn list(kind: ListMatches) {
-    match kind {
-        ListMatches::All => {
+pub fn list(view: ListView) {
+    match view {
+        ListView::All => {
             let list = List::load();
             if list.0.is_empty() {
                 println!("no waypoints defined")
@@ -88,7 +88,7 @@ pub fn list(kind: ListMatches) {
                 table::print_all(list)
             }
         }
-        ListMatches::Group(g) => {
+        ListView::Group(g) => {
             let list = List::load_group(&g);
             if let Some(l) = list {
                 table::print_group(l, &g)
@@ -96,12 +96,12 @@ pub fn list(kind: ListMatches) {
                 println!("'{}' is an empty group", &g)
             }
         }
-        ListMatches::Groupless => {
+        ListView::Groupless => {
             let list = List::load_groupless();
             if let Some(l) = list {
                 table::print_groupless(l)
             } else {
-                self::list(ListMatches::All)
+                self::list(ListView::All)
             }
         }
     }

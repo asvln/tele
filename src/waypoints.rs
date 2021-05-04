@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
-use std::fs::{self, File};
-use std::io::prelude::*;
-use crate::config::{Config, Filesystem};
+use std::fs;
+use crate::filesystem::Filesystem;
+use crate::TELE;
 
 type Outcome<T> = Result<T, ()>;
 const INVALID_WP_NAME: &'static str = "is not a waypoint";
 
-/// Waypoint
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Waypoint {
     pub name: String,
@@ -51,6 +50,7 @@ impl Waypoint {
         }
     }
 }
+
 
 /// List
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -220,17 +220,14 @@ impl List {
     pub fn load() -> List {
         // create file if it does not exist
         if fs::metadata(Filesystem::waypoints_file()).is_err() {
-            fs::create_dir_all(Filesystem::config_path())
+            fs::create_dir_all(TELE.config_dir())
                 .expect("could note create directory '~/.config/tele'");
             fs::write(Filesystem::waypoints_file(), b"[]")
                 .expect("could not create file '~/.config/tele/waypoints.json'")
         }
         // read file
-        let mut file_string = String::new();
-        File::open(Filesystem::waypoints_file())
-            .expect("error opening waypoint list")
-            .read_to_string(&mut file_string)
-            .expect("error converting list to string");
+        let file_string = fs::read_to_string(Filesystem::waypoints_file())
+            .expect("error opening waypoint list");
         // deserialize
         serde_json::from_str(&file_string).expect("error deserializing list")
     }
@@ -256,20 +253,54 @@ impl List {
 
     /// Sorts waypoints
     fn sort(mut self) -> Self {
-        if let Some(s) = Config::check("default_sort") {
-            if s == "name" {
+        match ListSort::from_config() {
+            ListSort::Name => {
                 self.0.sort_by(|a, b| a.name.cmp(&b.name));
                 self.0.sort_by(|a, b| a.group.cmp(&b.group));
                 self
-            } else if s == "path" {
+            }
+            _ =>{
                 self.0.sort_by(|a, b| a.path.cmp(&b.path));
                 self.0.sort_by(|a, b| a.group.cmp(&b.group));
                 self
-            } else {
-                self
+            }
+        }
+    }
+}
+
+pub enum ListSort {
+    Path,
+    Name,
+}
+impl ListSort {
+    pub fn from_config() -> Self {
+        if let Some(s) = &TELE.config().get("default-sort") {
+            match s.as_str() {
+                "path" => Self::Path,
+                "name" => Self::Name,
+                _ => Self::Path,
             }
         } else {
-            self
+            Self::Path
+        }
+    }
+}
+
+pub enum ListView {
+    Groupless,
+    All,
+    Group(String),
+}
+impl ListView {
+    pub fn from_config() -> Self {
+        if let Some(s) = &TELE.config().get("default-view") {
+            match s.as_str() {
+                "ungrouped" => Self::Groupless,
+                "all" => Self::All,
+                _ => Self::Groupless,
+            }
+        } else {
+            Self::Groupless
         }
     }
 }
